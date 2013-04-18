@@ -1,0 +1,248 @@
+\documentclass{beamer} 
+
+% Michael Maier, 2013.
+% CC-BY-SA
+
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+
+\title{OpenVPN} 
+\author{Michael Maier \textless Michael.Maier@student.tugraz.at\textgreater} 
+\date{20. April 2013} 
+
+\usetheme{Antibes}
+
+\hypersetup{colorlinks=true,urlcolor=blue,linkcolor=white}
+
+%\usebackgroundtemplatei{
+%\includegraphics[width=\paperwidth,
+%height=0.8\paperheight]{mag_map.png}
+%}
+
+\begin{document}
+
+%\maketitle
+
+\begin{frame} 
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.1\textwidth]{openvpn.png}
+\end{figure}
+
+\begin{center}
+\Huge{OpenVPN\\}
+\end{center}
+
+\begin{center}
+\Large{\emph{Sicher zwischen Netzen}}
+\end{center}
+
+\end{frame}
+
+
+
+\begin{frame}{Vorstellung}
+
+  \begin{itemize}
+    \item Michael Maier \textless \href{mailto:Michael.Maier@student.tugraz.at}{Michael.Maier@student.tugraz.at}\textgreater
+    \item Telematik-Student an der TU Graz 
+    \item Linux, Open-Source begeistert seit 2004
+    \item ZID der Montanuniversität 2006-2007
+    \item Nebenbei freiberuflich tätig seit 2009
+	    \pause
+    \item Leite den Grazer OSM-Stammtisch seit May 2011
+%    \begin{itemize}
+%      \item OSM-username: \emph{\href{http://www.openstreetmap.org/user/species}{species}}
+%      \item Mapping-area Graz, Leoben on bicycle, motorbike or on public transport
+%    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{VPN - Virtual Private Network?}
+
+\begin{frame}{Struktur von Netzwerken}
+
+	
+	Bild - Internet (Cloud) - Firewall - Internes Netz (Intranet)
+
+\end{frame}
+
+
+
+
+\begin{frame}{Privates Netz - Öffentliches Netz}
+
+Intern biete ich mehr Dienste als von Aussen an
+
+\begin{itemize}
+  \item Fileserver
+  \item VoIP-Server
+  \item Wartungszugänge zu Servern/PCs
+  \item Internen DNS
+  \item Bsp Uni: Zugang zu Bibliotheken auf IP-Adressbasis
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Externer Laptop?}
+	Soll ins interne Netz - Warum?
+
+	Will außerhalb dieselben Services nutzen können, wie wenn ich daheim wäre
+\begin{itemize}
+  \item Zugriff auf Fileserver
+  \item Zugriff auf Intranet-Seiten
+  \item Surfen hinter gesicherter Firewall
+\end{itemize}
+\pause
+Lösung?
+  \begin{itemize}
+    \item Virtual Private Netzwork!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{VPN-Tunnel}
+
+	,,Durchtunnelt'' die Firewall
+
+	\pause
+
+	Wie sieht das in der Praxis aus
+
+\begin{itemize}
+	\item Bekomme weitere (virtuelle) Netzwerkkarte
+	\item Diese tut so, als wäre ich in meinem Privaten Netz
+		\pause
+	\item Routing über die virtelle Netzwerkkarte:
+  \begin{itemize}
+	  \item Entweder nur der Traffic fürs Intranet (192.168.0.*)
+	  \item Oder alles, ich surfe dann über die Firma ins Internet
+  \end{itemize}
+\end{itemize}
+  \pause
+    Sehr praktisch, wenn in meinem WLAN/Hotel/... nicht alle Dienste erlaubt sind!
+\end{frame}
+
+\begin{frame}{Weitere Anwendung: Broadcast-Dienste}
+	Broadcast ... 255.255.255.255 
+
+	Definiert als DIESES Netzwerk - um solche Dienste zu nutzen muß ich in diesem Netzwerk sein!
+
+	\pause
+
+	Schreit förmlich nach VPN!
+\end{frame}
+
+\section{OpenVPN}
+
+\begin{frame}{OpenVPN}
+\begin{itemize}
+  \item GPL-Lizensierte Software
+  \item Eigenes Protokoll, OpenSSL-basiert 
+  \begin{itemize}
+    \item Linux, Android, *WRT
+    \item *BSD
+    \item MacOS/iOS
+    \item Solaris/QNX
+    \item Windows 2K/XP/Vista/7
+  \end{itemize}
+  \item Einfache Installation
+  \item ,,Einfache'' Konfiguration ... \pause Simple Config-Files
+  \item Automatisches Failover möglich
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{OpenVPN Modi}
+	Authentifizierung
+  \begin{itemize}
+    \item PSK (Pre-Shared Key)
+    \item Benutzername/Passwort
+    \item Zertifikatsbasiert
+  \end{itemize}
+\pause
+	Netzwerkmodi:
+\begin{itemize}
+	\item layer-2 based Ethernet (TAP)
+	\item layer-3 based IP tunnel (TUN)
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Aus der Praxis: Beispiel zur Nutzung von OpenVPN}
+
+	Proprietäre Geräte, die nur über Broadcast kommunizieren (Waren für reinen LAN-Betrieb ausgelegt) sollen ins WLAN.
+	\pause
+	Ja und?
+	\pause
+	Broadcast \& WLAN: Böse!
+
+  \begin{itemize}
+    \item Jedes Paket muß zu jedem Teilnehmer gesendet werden, auch wenn derjenige es garnicht braucht.
+    \item 34 Clients, die miteinander reden wollen ... 
+    \item 2 Broadcast-Pakete / Sekunde je 500\,B.
+	    \pause
+    \item Ergibt: $68$ Pakete/s auf $33$ Zielrechner : $2244$ Pakete/sec Worstcase $\Rightarrow$ No-Go!
+	    \pause
+    \item JEDES Gerät im WLAN wird mit Grundlast von 34\,KB/s bombardiert! $\Rightarrow$ bei 20 Geräten am AP~680\,KB/s
+  \end{itemize}
+
+
+\end{frame}
+
+\begin{frame}{Lösung: OpenVPN!}
+	Da wir nicht alle anderen Clients im WLAN (Laptops, Handys, Tablets,...) mit unseren Pakete belästigen wollen, spannen wir innerhalb des WLANs ein VPN auf:
+	\pause
+  \begin{itemize}
+    \item Ein zentraler OpenVPN-Server
+    \item Broadcast-Pakete in den Tunneln werden nur an unsere Clients gesendet
+    \item Einrichten von Subnetzen mit Firewall-trennung
+    \item Filtern unwichtiger Broadcasts
+    \item Komprimierung der Daten durch OpenVPN
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Realisierung:}
+  \begin{itemize}
+	  \item Gumstix (r) an den LAN-Clients, die sich ins WLAN einwählen
+	  \item OpenVPN-Server in einer VM, ins WLAN-Netz geroutet
+	  \item Clients in 3 Subnetze getrennt
+	  \begin{itemize}
+		  \item 3 OpenVPN-Endpunkte am Server
+		  \item Interfaces mit brctl gebridged
+		  \item Filternde Firewall zwischen den Subnetzen
+		  \item Ein Teil der Broadcast-Paket war unnötig, 6/7 gedroppt.
+	  \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Hilfe}
+
+Links
+
+\begin{itemize}
+	\item \url{http://openvpn.net}
+	\item Manpage (!): \emph{man 8 openvpn}
+\end{itemize}
+
+\end{frame}
+
+\section{Ende}
+
+\begin{frame}{Vielen Dank für die Aufmerksamkeit!}
+
+  Folien zu OpenVPN auf den Grazer Linuxtagen, 20.4.2013.
+\vspace{1cm}
+
+Folien unter: \includegraphics[width=1cm]{cc-by-sa.png}.
+\vspace{1cm}
+
+Erstellt mittels \LaTeX Beamer, Quelltext: \href{https://github.com/species/vortrag-openvpn-glt13}{Github}.
+\vspace{1cm}
+
+\href{mailto:michael.maier@student.tugraz.at}{Michael Maier}
+
+Twitter: \href{https://twitter.com/osmgraz}{@osmgraz}
+\end{frame}
+
+\end{document}
